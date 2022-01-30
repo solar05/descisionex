@@ -1,6 +1,6 @@
 # Descisionex
 
-**TODO: Add description**
+Library for dealing with [descision theory](https://en.wikipedia.org/wiki/Decision_theory) algorithms.
 
 ## Installation
 
