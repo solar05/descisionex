@@ -11,7 +11,7 @@ defmodule Descisionex.AnalyticHierarchy do
             criteria_num: 0,
             alternatives: [],
             alternatives_matrix: %{},
-            alternatives_weigths: [],
+            alternatives_weights: [],
             alternatives_weights_by_criteria: [],
             alternatives_num: 0,
             criteria: []
@@ -73,7 +73,7 @@ defmodule Descisionex.AnalyticHierarchy do
   def calculate_alternatives_weights(%AnalyticHierarchy{} = data) do
     weights = data.criteria_weights
 
-    alternatives_weigths =
+    alternatives_weights =
       Enum.reduce(data.alternatives_weights_by_criteria, [], fn column, acc ->
         product =
           Enum.map(Enum.with_index(column), fn {number, index} ->
@@ -85,6 +85,6 @@ defmodule Descisionex.AnalyticHierarchy do
         acc ++ [product]
       end)
 
-    Map.put(data, :alternatives_weigths, alternatives_weigths)
+    Map.put(data, :alternatives_weights, alternatives_weights)
   end
 end
