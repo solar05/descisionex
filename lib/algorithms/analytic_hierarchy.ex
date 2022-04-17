@@ -6,8 +6,7 @@ defmodule Descisionex.AnalyticHierarchy do
   alias Descisionex.{AnalyticHierarchy, Helper}
 
   defstruct comparison_matrix: [],
-            with_mean: [],
-            normalized: [],
+            normalized_matrix: [],
             weighting_criteria: [],
             criteria_num: 0,
             alternatives: [],
@@ -25,7 +24,7 @@ defmodule Descisionex.AnalyticHierarchy do
   end
 
   def normalize(%AnalyticHierarchy{} = data) do
-    size = data.alternatives_num
+    size = data.criteria_num
 
     summed_columns =
       Helper.traverse_columns(size, data.comparison_matrix)
@@ -43,10 +42,17 @@ defmodule Descisionex.AnalyticHierarchy do
         acc ++ [column]
       end)
 
-    Map.put(data, :normalized, normalized)
+    Map.put(data, :normalized_matrix, normalized)
   end
 
-  def calculate_mean(%AnalyticHierarchy{} = data) do
-    data
+  def calculate_weights(%AnalyticHierarchy{} = data) do
+    size = data.criteria_num
+
+    weighting_criteria =
+      Enum.map(data.normalized_matrix, fn row ->
+        [Float.round(Enum.sum(row) / size, 3)]
+      end)
+
+    Map.put(data, :weighting_criteria, weighting_criteria)
   end
 end
