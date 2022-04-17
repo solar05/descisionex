@@ -11,7 +11,7 @@ defmodule DescisionexTest.AnalyticHierarchyTest do
     [1 / 5, 1 / 2, 1 / 6, 1 / 8, 1]
   ]
 
-  @normalized_matrix [
+  @normalized_comparison_matrix [
     [0.221, 0.194, 0.293, 0.181, 0.227],
     [0.074, 0.065, 0.073, 0.052, 0.091],
     [0.221, 0.258, 0.293, 0.361, 0.273],
@@ -29,16 +29,16 @@ defmodule DescisionexTest.AnalyticHierarchyTest do
 
   test "normalizes alternatives" do
     hierarchy = setup_hierarchy()
-    result = hierarchy |> AnalyticHierarchy.normalize()
+    result = hierarchy |> AnalyticHierarchy.normalize_comparison_matrix()
 
-    assert @normalized_matrix == result.normalized_matrix
+    assert @normalized_comparison_matrix == result.normalized_comparison_matrix
   end
 
   test "calculates weight criteria" do
     hierarchy = setup_normalized_hierarchy()
-    result = hierarchy |> AnalyticHierarchy.calculate_weights()
+    result = hierarchy |> AnalyticHierarchy.calculate_criteria_weights()
 
-    assert @weights == result.weighting_criteria
+    assert @weights == result.criteria_weights
   end
 
   def setup_hierarchy() do
@@ -48,6 +48,6 @@ defmodule DescisionexTest.AnalyticHierarchyTest do
   end
 
   def setup_normalized_hierarchy() do
-    setup_hierarchy() |> AnalyticHierarchy.normalize()
+    setup_hierarchy() |> AnalyticHierarchy.normalize_comparison_matrix()
   end
 end

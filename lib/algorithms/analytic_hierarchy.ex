@@ -6,10 +6,13 @@ defmodule Descisionex.AnalyticHierarchy do
   alias Descisionex.{AnalyticHierarchy, Helper}
 
   defstruct comparison_matrix: [],
-            normalized_matrix: [],
-            weighting_criteria: [],
+            normalized_comparison_matrix: [],
+            criteria_weights: [],
             criteria_num: 0,
             alternatives: [],
+            alternatives_matrix: %{},
+            alternatives_weigths: [],
+            alternatives_weights_by_criteria: [],
             alternatives_num: 0,
             criteria: []
 
@@ -23,36 +26,65 @@ defmodule Descisionex.AnalyticHierarchy do
     |> Map.put(:alternatives_num, Enum.count(alternatives))
   end
 
-  def normalize(%AnalyticHierarchy{} = data) do
-    size = data.criteria_num
-
-    summed_columns =
-      Helper.traverse_columns(size, data.comparison_matrix)
-      |> Enum.map(fn row -> Enum.sum(row) end)
-      |> Enum.with_index()
-
-    normalized =
-      Enum.reduce(0..(size - 1), [], fn index, acc ->
-        column =
-          Enum.map(Enum.with_index(Enum.at(data.comparison_matrix, index)), fn {alternative, ind} ->
-            {sum, _} = Enum.at(summed_columns, ind)
-            Float.round(alternative / sum, 3)
-          end)
-
-        acc ++ [column]
+  def set_alternatives_matrix(%AnalyticHierarchy{} = data, matrix) do
+    tagged =
+      Enum.map(Enum.with_index(data.criteria), fn {criteria, index} ->
+        {criteria, Enum.at(matrix, index)}
       end)
+      |> Enum.into(%{})
 
-    Map.put(data, :normalized_matrix, normalized)
+    data |> Map.put(:alternatives_matrix, tagged)
   end
 
-  def calculate_weights(%AnalyticHierarchy{} = data) do
+  def normalize_comparison_matrix(%AnalyticHierarchy{} = data) do
     size = data.criteria_num
 
-    weighting_criteria =
-      Enum.map(data.normalized_matrix, fn row ->
-        [Float.round(Enum.sum(row) / size, 3)]
+    normalized = Helper.normalize(data.comparison_matrix, size)
+
+    Map.put(data, :normalized_comparison_matrix, normalized)
+  end
+
+  def calculate_criteria_weights(%AnalyticHierarchy{} = data) do
+    size = data.criteria_num
+    criteria_weights = Helper.calculate_weights(data.normalized_comparison_matrix, size)
+
+    Map.put(data, :criteria_weights, criteria_weights)
+  end
+
+  def calculate_alternatives_weights_by_criteria(%AnalyticHierarchy{} = data) do
+    alternatives_weights_by_criteria =
+      Enum.map(data.criteria, fn criteria ->
+        matrix = data.alternatives_matrix[criteria]
+        size = Enum.count(matrix)
+
+        weights =
+          matrix
+          |> Helper.normalize(size)
+          |> Helper.calculate_weights(size)
+
+        weights
       end)
 
-    Map.put(data, :weighting_criteria, weighting_criteria)
+    result = alternatives_weights_by_criteria |> Matrix.transpose() |> Enum.map(&List.flatten/1)
+
+    Map.put(data, :alternatives_weights_by_criteria, result)
+  end
+
+  def calculate_alternatives_weights(%AnalyticHierarchy{} = data) do
+    weights = data.criteria_weights
+
+    alternatives_weigths =
+      Enum.reduce(data.alternatives_weights_by_criteria, [], fn column, acc ->
+        product =
+          Enum.map(Enum.with_index(column), fn {number, index} ->
+            [weight | _] = Enum.at(weights, index)
+            Float.round(number * weight, 3)
+          end)
+          |> Enum.sum()
+
+        acc ++ [product]
+      end)
+
+    Map.put(data, :alternatives_weigths, alternatives_weigths)
   end
 end
