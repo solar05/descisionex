@@ -33,7 +33,6 @@ defmodule Descisionex.MixProject do
     ]
   end
 
-
   defp description() do
     "Library for dealing with descision theory algorithms."
   end
