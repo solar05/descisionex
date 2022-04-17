@@ -3,7 +3,7 @@ defmodule Descisionex.AnalyticHierarchy do
   https://en.wikipedia.org/wiki/Analytic_hierarchy_process
   """
 
-  alias Descisionex.AnalyticHierarchy
+  alias Descisionex.{AnalyticHierarchy, Helper}
 
   defstruct comparison_matrix: [],
             with_mean: [],
@@ -28,7 +28,7 @@ defmodule Descisionex.AnalyticHierarchy do
     size = data.alternatives_num
 
     summed_columns =
-      traverse_columns(size, data.comparison_matrix)
+      Helper.traverse_columns(size, data.comparison_matrix)
       |> Enum.map(fn row -> Enum.sum(row) end)
       |> Enum.with_index()
 
@@ -48,15 +48,5 @@ defmodule Descisionex.AnalyticHierarchy do
 
   def calculate_mean(%AnalyticHierarchy{} = data) do
     data
-  end
-
-  defp avg(row, size) do
-    Float.round(Enum.sum(row) / size, 3)
-  end
-
-  defp traverse_columns(size, matrix) do
-    Enum.reduce(0..(size - 1), [], fn index, acc ->
-      acc ++ [Enum.map(matrix, fn row -> Enum.at(row, index) end)]
-    end)
   end
 end
