@@ -1,5 +1,7 @@
 .PHONY: test
 
+run:
+	iex -S mix
 fix-lint:
 	mix format
 lint:
