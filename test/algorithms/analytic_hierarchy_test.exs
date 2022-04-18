@@ -60,7 +60,7 @@ defmodule DescisionexTest.AnalyticHierarchyTest do
   test "sets alternatives matrix" do
     hierarchy = setup_normalized_hierarchy()
 
-    result = hierarchy |> AnalyticHierarchy.set_alternatives_matrix(alternatives_matrix)
+    result = hierarchy |> AnalyticHierarchy.set_alternatives_matrix(alternatives_matrix())
 
     assert @alternatives_matrix == result.alternatives_matrix
   end
@@ -92,7 +92,7 @@ defmodule DescisionexTest.AnalyticHierarchyTest do
     place = [[1, 1 / 3, 4], [3, 1, 4], [1 / 4, 1 / 5, 1]]
     category = [[1, 2, 4], [1 / 2, 1, 1 / 6], [5, 6, 1]]
 
-    alternatives = [price, size, rooms, place, category]
+    [price, size, rooms, place, category]
   end
 
   def setup_hierarchy() do
