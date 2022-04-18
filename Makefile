@@ -8,3 +8,5 @@ lint:
 	mix format --check-formatted
 test:
 	mix test
+publish:
+	mix hex.publish
