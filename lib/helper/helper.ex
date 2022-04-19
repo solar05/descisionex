@@ -37,4 +37,12 @@ defmodule Descisionex.Helper do
       acc ++ [Enum.map(matrix, fn row -> Enum.at(row, index) end)]
     end)
   end
+
+  def find_max_criteria(criteria) do
+    criteria |> Enum.with_index() |> Enum.max()
+  end
+
+  def find_min_criteria(criteria) do
+    criteria |> Enum.with_index() |> Enum.min()
+  end
 end
