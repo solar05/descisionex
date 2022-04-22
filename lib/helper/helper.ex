@@ -5,7 +5,7 @@ defmodule Descisionex.Helper do
 
   def normalize(data, size) do
     summed_columns =
-      traverse_columns(size, data)
+      Matrix.transpose(data)
       |> Enum.map(fn row -> Enum.sum(row) end)
       |> Enum.with_index()
 
@@ -29,13 +29,6 @@ defmodule Descisionex.Helper do
   @spec avg(any, number) :: float
   def avg(row, size) do
     Float.round(Enum.sum(row) / size, 3)
-  end
-
-  @spec traverse_columns(integer, any) :: any
-  def traverse_columns(size, matrix) do
-    Enum.reduce(0..(size - 1), [], fn index, acc ->
-      acc ++ [Enum.map(matrix, fn row -> Enum.at(row, index) end)]
-    end)
   end
 
   def find_max_criteria(criteria) do
