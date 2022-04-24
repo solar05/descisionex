@@ -15,7 +15,7 @@ by adding `descisionex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:descisionex, "~> 0.1.3"}
+    {:descisionex, "~> 0.1.4"}
   ]
 end
 ```
