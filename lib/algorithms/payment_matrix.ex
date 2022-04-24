@@ -145,10 +145,10 @@ defmodule Descisionex.PaymentMatrix do
 
   def calculate_criteria(%PaymentMatrix{} = data) do
     data
-    |> calculate_wald_criterion
-    |> calculate_savage_criterion
-    |> calculate_laplace_criterion
-    |> calculate_hurwitz_criterion
+    |> calculate_wald_criterion()
+    |> calculate_savage_criterion()
+    |> calculate_laplace_criterion()
+    |> calculate_hurwitz_criterion()
     |> calculate_generalized_criterion()
   end
 end
