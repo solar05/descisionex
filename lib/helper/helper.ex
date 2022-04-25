@@ -3,6 +3,17 @@ defmodule Descisionex.Helper do
   Utility functions
   """
 
+  @doc """
+  Normalizes matrix.
+
+  ## Examples
+
+      iex> matrix = [[1, 2], [3, 4], [0, 1]]
+      iex> size = 3 # matrix rows
+      iex> Descisionex.Helper.normalize(matrix, size)
+      [[0.25, 0.286], [0.75, 0.571], [0.0, 0.143]]
+
+  """
   @spec normalize([[number]], integer) :: any
   def normalize(data, size) do
     summed_columns =
@@ -21,6 +32,17 @@ defmodule Descisionex.Helper do
     end)
   end
 
+  @doc """
+  Calculate weights for matrix rows.
+
+  ## Examples
+
+      iex> matrix = [[1, 2], [3, 4], [0, 1]]
+      iex> size = 2 # matrix row elements count
+      iex> Descisionex.Helper.calculate_weights(matrix, size)
+      [[1.5], [3.5], [0.5]]
+
+  """
   @spec calculate_weights(any, any) :: list
   def calculate_weights(data, size) do
     Enum.map(data, fn row ->
@@ -53,7 +75,6 @@ defmodule Descisionex.Helper do
       {[3, 4], 1}
 
   """
-
   @spec find_max_criteria(any) :: any
   def find_max_criteria(criteria) do
     criteria |> Enum.with_index() |> Enum.max()
