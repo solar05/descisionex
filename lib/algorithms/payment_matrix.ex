@@ -18,24 +18,128 @@ defmodule Descisionex.PaymentMatrix do
             hurwitz_criterion: %{},
             generalized_criterion: %{}
 
+  @doc """
+  Set variants for payment matrix.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{} |> Descisionex.PaymentMatrix.set_variants(["some", "variants"])
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{},
+        variants: ["some", "variants"],
+        variants_num: 2,
+        wald_criterion: %{}
+      }
+
+  """
   def set_variants(%PaymentMatrix{} = data, variants) do
     data
     |> Map.put(:variants, variants)
     |> Map.put(:variants_num, Enum.count(variants))
   end
 
-  def set_hurwitz_additional_value(%PaymentMatrix{} = data, value) do
-    Map.put(data, :hurwitz_additional_value, value)
-  end
+  @doc """
+  Set steps for payment matrix.
 
-  def set_generalized_additional_value(%PaymentMatrix{} = data, value) do
-    Map.put(data, :generalized_additional_value, value)
-  end
+  ## Examples
 
+      iex> %Descisionex.PaymentMatrix{} |> Descisionex.PaymentMatrix.set_steps(["some", "steps"])
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [],
+        possible_steps: ["some", "steps"],
+        possible_steps_num: 2,
+        savage_criterion: %{},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{}
+      }
+
+  """
   def set_steps(%PaymentMatrix{} = data, steps) do
     data
     |> Map.put(:possible_steps, steps)
     |> Map.put(:possible_steps_num, Enum.count(steps))
+  end
+
+  @doc """
+  Set Hurwitz additional value for payment matrix (range from 0.1 to 0.9), defaults to 0.5.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{} |> Descisionex.PaymentMatrix.set_hurwitz_additional_value(0.3)
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.3,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{}
+      }
+
+      iex> %Descisionex.PaymentMatrix{} |> Descisionex.PaymentMatrix.set_hurwitz_additional_value(0)
+      ** (ArgumentError) Hurwitz additional value incorrect (number range must be from 0.1 to 0.9)
+
+  """
+  def set_hurwitz_additional_value(%PaymentMatrix{} = data, value) do
+    if 0.1 <= value && value <= 0.9 do
+      Map.put(data, :hurwitz_additional_value, value)
+    else
+      raise ArgumentError,
+        message: "Hurwitz additional value incorrect (number range must be from 0.1 to 0.9)"
+    end
+  end
+
+  @doc """
+  Set Generalized additional value for payment matrix (range from 0.1 to 0.9), defaults to 0.5.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{} |> Descisionex.PaymentMatrix.set_generalized_additional_value(0.3)
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.3,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{}
+      }
+
+      iex> %Descisionex.PaymentMatrix{} |> Descisionex.PaymentMatrix.set_generalized_additional_value(0)
+      ** (ArgumentError) Generalized additional value incorrect (number range must be from 0.1 to 0.9)
+
+  """
+  def set_generalized_additional_value(%PaymentMatrix{} = data, value) do
+    if 0.1 <= value && value <= 0.9 do
+      Map.put(data, :generalized_additional_value, value)
+    else
+      raise ArgumentError,
+        message: "Generalized additional value incorrect (number range must be from 0.1 to 0.9)"
+    end
   end
 
   def calculate_wald_criterion(%PaymentMatrix{} = data) do

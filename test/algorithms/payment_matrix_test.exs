@@ -3,6 +3,8 @@ defmodule DescisionexTest.PaymentMatrixTest do
 
   alias Descisionex.PaymentMatrix
 
+  doctest Descisionex.PaymentMatrix
+
   @matrix [
     [0.221, 0.194, 0.293, 0.181, 0.227],
     [0.074, 0.065, 0.073, 0.052, 0.091],
