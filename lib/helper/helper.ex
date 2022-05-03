@@ -107,6 +107,10 @@ defmodule Descisionex.Helper do
   """
   @spec round_matrix([[number]]) :: list
   def round_matrix(matrix) do
-    Enum.map(matrix, fn row -> Enum.map(row, fn element -> Float.round(element, 3) end) end)
+    Enum.map(matrix, fn row ->
+      Enum.map(row, fn element ->
+        if is_float(element), do: Float.round(element, 3), else: element
+      end)
+    end)
   end
 end

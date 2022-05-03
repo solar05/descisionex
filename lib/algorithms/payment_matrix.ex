@@ -142,6 +142,28 @@ defmodule Descisionex.PaymentMatrix do
     end
   end
 
+  @doc """
+  Calculates Wald criterion for payment matrix.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.calculate_wald_criterion()
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [[1, 2], [3, 4]],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{criterion: 4, strategy_index: 1}
+      }
+
+  """
   def calculate_wald_criterion(%PaymentMatrix{} = data) do
     all_criteria = Enum.map(data.matrix, fn row -> Enum.max(row) end)
     {wald_criterion, strategy_index} = Helper.find_max_criteria(all_criteria)
@@ -149,8 +171,35 @@ defmodule Descisionex.PaymentMatrix do
     Map.put(data, :wald_criterion, %{criterion: wald_criterion, strategy_index: strategy_index})
   end
 
+  @doc """
+  Calculates Laplace criterion for payment matrix (variants must be set).
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.calculate_laplace_criterion()
+      ** (ArgumentError) For Laplace criterion variants must be set!
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.set_variants(["some", "variants"]) |> Descisionex.PaymentMatrix.calculate_laplace_criterion()
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{criterion: 3.5, strategy_index: 1},
+        matrix: [[1, 2], [3, 4]],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{},
+        variants: ["some", "variants"],
+        variants_num: 2,
+        wald_criterion: %{}
+      }
+
+  """
   def calculate_laplace_criterion(%PaymentMatrix{} = data) do
     variant_rows = data.variants_num
+
+    if variant_rows == 0,
+      do: raise(ArgumentError, message: "For Laplace criterion variants must be set!")
 
     all_criteria =
       data.matrix
@@ -169,19 +218,47 @@ defmodule Descisionex.PaymentMatrix do
     })
   end
 
+  @doc """
+  Calculates Hurwitz criterion for payment matrix.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.calculate_hurwitz_criterion()
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{criterion: 3.5, strategy_index: 1},
+        laplace_criterion: %{},
+        matrix: [[1, 2], [3, 4]],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{}
+      }
+
+  """
   def calculate_hurwitz_criterion(%PaymentMatrix{} = data) do
     additional_value = data.hurwitz_additional_value
 
     max =
       data.matrix
       |> Enum.map(fn row -> Enum.max(row) end)
-      |> Enum.map(fn element -> Float.round(element * additional_value, 3) end)
+      |> Enum.map(fn element ->
+        num = element * additional_value
+        if is_float(num), do: Float.round(num, 3), else: num
+      end)
       |> Enum.with_index()
 
     min =
       data.matrix
       |> Enum.map(fn row -> Enum.min(row) end)
-      |> Enum.map(fn element -> Float.round(element * (1 - additional_value), 3) end)
+      |> Enum.map(fn element ->
+        num = element * (1 - additional_value)
+        if is_float(num), do: Float.round(num, 3), else: num
+      end)
 
     {hurwitz_criterion, strategy_index} =
       max
@@ -196,6 +273,28 @@ defmodule Descisionex.PaymentMatrix do
     })
   end
 
+  @doc """
+  Calculates Savage criterion for payment matrix.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.calculate_savage_criterion()
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [[1, 2], [3, 4]],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{criterion: 0, strategy_index: 1},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{}
+      }
+
+  """
   def calculate_savage_criterion(%PaymentMatrix{} = data) do
     matrix = data.matrix
 
@@ -208,7 +307,10 @@ defmodule Descisionex.PaymentMatrix do
       matrix
       |> Enum.map(fn row ->
         Enum.zip(max, row)
-        |> Enum.map(fn {risk, elem} -> Float.round(risk - elem, 3) end)
+        |> Enum.map(fn {risk, elem} ->
+          num = risk - elem
+          if is_float(num), do: Float.round(num, 3), else: num
+        end)
       end)
       |> Enum.map(fn row -> Enum.max(row) end)
 
@@ -220,19 +322,47 @@ defmodule Descisionex.PaymentMatrix do
     })
   end
 
+  @doc """
+  Calculates generalized criterion for payment matrix.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3,4]]} |> Descisionex.PaymentMatrix.calculate_generalized_criterion()
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{criterion: 1.5, strategy_index: 0},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [[1, 2], [3, 4]],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{}
+      }
+
+  """
   def calculate_generalized_criterion(%PaymentMatrix{} = data) do
     additional_value = data.generalized_additional_value
 
     max =
       data.matrix
       |> Enum.map(fn row -> Enum.max(row) end)
-      |> Enum.map(fn element -> Float.round(element * additional_value, 3) end)
+      |> Enum.map(fn element ->
+        num = element * additional_value
+        if is_float(num), do: Float.round(num, 3), else: num
+      end)
       |> Enum.with_index()
 
     min =
       data.matrix
       |> Enum.map(fn row -> Enum.min(row) end)
-      |> Enum.map(fn element -> Float.round(element * additional_value, 3) end)
+      |> Enum.map(fn element ->
+        num = element * additional_value
+        if is_float(num), do: Float.round(num, 3), else: num
+      end)
 
     {generalized_criterion, strategy_index} =
       max
@@ -247,6 +377,28 @@ defmodule Descisionex.PaymentMatrix do
     })
   end
 
+  @doc """
+  Calculates all criteria for payment matrix.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3,4]]} |> Descisionex.PaymentMatrix.set_variants(["some", "variants"]) |> Descisionex.PaymentMatrix.calculate_criteria()
+      %Descisionex.PaymentMatrix{
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{criterion: 1.5, strategy_index: 0},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{criterion: 3.5, strategy_index: 1},
+        laplace_criterion: %{criterion: 3.5, strategy_index: 1},
+        matrix: [[1, 2], [3, 4]],
+        possible_steps: [],
+        possible_steps_num: 0,
+        savage_criterion: %{criterion: 0, strategy_index: 1},
+        variants: ["some", "variants"],
+        variants_num: 2,
+        wald_criterion: %{criterion: 4, strategy_index: 1}
+      }
+
+  """
   def calculate_criteria(%PaymentMatrix{} = data) do
     data
     |> calculate_wald_criterion()
