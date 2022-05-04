@@ -3,6 +3,8 @@ defmodule DescisionexTest.AnalyticHierarchyTest do
 
   alias Descisionex.AnalyticHierarchy
 
+  doctest Descisionex.AnalyticHierarchy
+
   @comparison_matrix [
     [1, 3, 1, 1 / 2, 5],
     [1 / 3, 1, 1 / 4, 1 / 7, 2],
