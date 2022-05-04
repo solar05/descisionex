@@ -35,6 +35,8 @@ defmodule Descisionex.AnalyticHierarchy do
   end
 
   def set_alternatives_matrix(%AnalyticHierarchy{} = data, matrix) do
+    if data.criteria_num == 0, do: raise(ArgumentError, message: "Criteria must be set!")
+
     tagged =
       Enum.map(Enum.with_index(data.criteria), fn {criteria, index} ->
         {criteria, Enum.at(matrix, index)}
@@ -65,6 +67,8 @@ defmodule Descisionex.AnalyticHierarchy do
   end
 
   def calculate_alternatives_weights_by_criteria(%AnalyticHierarchy{} = data) do
+    if data.criteria_num == 0, do: raise(ArgumentError, message: "Criteria must be set!")
+
     alternatives_weights_by_criteria =
       Enum.map(data.criteria, fn criteria ->
         matrix = data.alternatives_matrix[criteria]
