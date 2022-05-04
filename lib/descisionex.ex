@@ -6,7 +6,11 @@ defmodule Descisionex do
   alias Descisionex.{PaymentMatrix, AnalyticHierarchy}
 
   def analytic_hierarchy() do
-    %AnalyticHierarchy{}
+    raise(ArgumentError, message: "Comparison matrix must be set!")
+  end
+
+  def analytic_hierarchy([]) do
+    raise(ArgumentError, message: "Comparison matrix must be set!")
   end
 
   def analytic_hierarchy(matrix) do
@@ -14,7 +18,11 @@ defmodule Descisionex do
   end
 
   def payment_matrix() do
-    %PaymentMatrix{}
+    raise(ArgumentError, message: "Matrix must be set!")
+  end
+
+  def payment_matrix([]) do
+    raise(ArgumentError, message: "Matrix must be set!")
   end
 
   def payment_matrix(matrix) do
