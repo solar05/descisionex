@@ -16,8 +16,16 @@ defmodule Descisionex.AnalyticHierarchy do
             alternatives_num: 0,
             criteria: []
 
+  def set_criteria(%AnalyticHierarchy{} = _data, []) do
+    raise ArgumentError, message: "Criteria must be not empty!"
+  end
+
   def set_criteria(%AnalyticHierarchy{} = data, criteria) do
     data |> Map.put(:criteria, criteria) |> Map.put(:criteria_num, Enum.count(criteria))
+  end
+
+  def set_alternatives(%AnalyticHierarchy{} = _data, []) do
+    raise ArgumentError, message: "Alternatives must be not empty!"
   end
 
   def set_alternatives(%AnalyticHierarchy{} = data, alternatives) do
@@ -39,6 +47,8 @@ defmodule Descisionex.AnalyticHierarchy do
   def normalize_comparison_matrix(%AnalyticHierarchy{} = data) do
     size = data.criteria_num
 
+    if size == 0, do: raise(ArgumentError, message: "Criteria must be set!")
+
     normalized = Helper.normalize(data.comparison_matrix, size)
 
     Map.put(data, :normalized_comparison_matrix, normalized)
@@ -46,6 +56,9 @@ defmodule Descisionex.AnalyticHierarchy do
 
   def calculate_criteria_weights(%AnalyticHierarchy{} = data) do
     size = data.criteria_num
+
+    if size == 0, do: raise(ArgumentError, message: "Criteria must be set!")
+
     criteria_weights = Helper.calculate_weights(data.normalized_comparison_matrix, size)
 
     Map.put(data, :criteria_weights, criteria_weights)
@@ -72,6 +85,8 @@ defmodule Descisionex.AnalyticHierarchy do
 
   def calculate_alternatives_weights(%AnalyticHierarchy{} = data) do
     weights = data.criteria_weights
+
+    if weights == [], do: raise(ArgumentError, message: "Weights must be calculated before!")
 
     alternatives_weights =
       Enum.reduce(data.alternatives_weights_by_criteria, [], fn column, acc ->
