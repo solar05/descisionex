@@ -112,6 +112,13 @@ defmodule Descisionex.AnalyticHierarchy do
     data |> Map.put(:alternatives_matrix, tagged)
   end
 
+  def set_tagged_alternatives_matrix(%AnalyticHierarchy{} = data, matrix) do
+    if data.criteria_num == 0, do: raise(ArgumentError, message: "Criteria must be set!")
+    if matrix == [] || matrix == %{}, do: raise(ArgumentError, message: "Incorrect matrix!")
+
+    data |> Map.put(:alternatives_matrix, matrix)
+  end
+
   @doc """
   Normalizes comparison matrix for analytic hierarchy (criteria must be set, such as comparison matrix!).
 
