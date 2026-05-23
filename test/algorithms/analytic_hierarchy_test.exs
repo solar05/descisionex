@@ -46,45 +46,142 @@ defmodule DescisionexTest.AnalyticHierarchyTest do
   @alternatives_weights [0.336, 0.41900000000000004, 0.245]
 
   test "normalizes comparison matrix" do
-    hierarchy = setup_hierarchy()
-    result = hierarchy |> AnalyticHierarchy.normalize_comparison_matrix()
-
+    result = setup_hierarchy() |> AnalyticHierarchy.normalize_comparison_matrix()
     assert @normalized_comparison_matrix == result.normalized_comparison_matrix
   end
 
   test "calculates criteria weights" do
-    hierarchy = setup_normalized_hierarchy()
-    result = hierarchy |> AnalyticHierarchy.calculate_criteria_weights()
-
+    result = setup_normalized_hierarchy() |> AnalyticHierarchy.calculate_criteria_weights()
     assert @weights == result.criteria_weights
   end
 
   test "sets alternatives matrix" do
-    hierarchy = setup_normalized_hierarchy()
-
-    result = hierarchy |> AnalyticHierarchy.set_alternatives_matrix(alternatives_matrix())
+    result =
+      setup_normalized_hierarchy()
+      |> AnalyticHierarchy.set_alternatives_matrix(alternatives_matrix())
 
     assert @alternatives_matrix == result.alternatives_matrix
   end
 
   test "calculates alternatives weights by criteria" do
-    hierarchy = setup_hierarchy_with_alternatives()
-
-    result = hierarchy |> AnalyticHierarchy.calculate_alternatives_weights_by_criteria()
+    result =
+      setup_hierarchy_with_alternatives()
+      |> AnalyticHierarchy.calculate_alternatives_weights_by_criteria()
 
     assert @alternatives_weights_by_criteria == result.alternatives_weights_by_criteria
   end
 
   test "calculate alternatives weights" do
-    hierarchy =
+    result =
       setup_hierarchy_with_alternatives()
       |> AnalyticHierarchy.calculate_criteria_weights()
       |> AnalyticHierarchy.calculate_alternatives_weights_by_criteria()
-
-    result = hierarchy |> AnalyticHierarchy.calculate_alternatives_weights()
+      |> AnalyticHierarchy.calculate_alternatives_weights()
 
     assert @alternatives_weights == result.alternatives_weights
     assert 1.0 == Enum.sum(result.alternatives_weights)
+  end
+
+  # --- Consistency ratio ---
+
+  test "calculates consistency ratio for a consistent matrix" do
+    result =
+      setup_normalized_hierarchy()
+      |> AnalyticHierarchy.calculate_criteria_weights()
+      |> AnalyticHierarchy.calculate_consistency_ratio()
+
+    assert result.consistency_ratio < 0.1
+    assert result.lambda_max > 5.0
+    assert result.consistency_index > 0.0
+  end
+
+  test "consistency ratio is 0 for a perfectly consistent 2x2 matrix" do
+    result =
+      %AnalyticHierarchy{comparison_matrix: [[1, 2], [0.5, 1]]}
+      |> AnalyticHierarchy.set_criteria(["a", "b"])
+      |> AnalyticHierarchy.normalize_comparison_matrix()
+      |> AnalyticHierarchy.calculate_criteria_weights()
+      |> AnalyticHierarchy.calculate_consistency_ratio()
+
+    assert result.consistency_ratio == 0.0
+  end
+
+  test "raises when calculating consistency ratio without weights" do
+    assert_raise ArgumentError,
+                 "Criteria weights must be calculated before consistency ratio!",
+                 fn ->
+                   setup_hierarchy() |> AnalyticHierarchy.calculate_consistency_ratio()
+                 end
+  end
+
+  # --- Full pipeline ---
+
+  test "calculate/1 runs the full pipeline and produces weights summing to 1" do
+    result =
+      %AnalyticHierarchy{comparison_matrix: @comparison_matrix}
+      |> AnalyticHierarchy.set_criteria(["price", "size", "rooms", "place", "category"])
+      |> AnalyticHierarchy.set_alternatives(["apartment1", "apartment2", "apartment3"])
+      |> AnalyticHierarchy.set_alternatives_matrix(alternatives_matrix())
+      |> AnalyticHierarchy.calculate()
+
+    assert length(result.alternatives_weights) == 3
+    assert Float.round(Enum.sum(result.alternatives_weights), 10) == 1.0
+    assert result.consistency_ratio != nil
+    assert result.consistency_ratio < 0.1
+  end
+
+  test "calculate/1 populates all fields" do
+    result =
+      %AnalyticHierarchy{comparison_matrix: @comparison_matrix}
+      |> AnalyticHierarchy.set_criteria(["price", "size", "rooms", "place", "category"])
+      |> AnalyticHierarchy.set_alternatives(["apartment1", "apartment2", "apartment3"])
+      |> AnalyticHierarchy.set_alternatives_matrix(alternatives_matrix())
+      |> AnalyticHierarchy.calculate()
+
+    assert result.normalized_comparison_matrix != []
+    assert result.criteria_weights != []
+    assert result.alternatives_weights_by_criteria != []
+    assert result.alternatives_weights != []
+    assert result.lambda_max != nil
+    assert result.consistency_index != nil
+    assert result.consistency_ratio != nil
+  end
+
+  # --- Input validation ---
+
+  test "raises when alternatives matrix row count does not match criteria count" do
+    assert_raise ArgumentError, ~r/Matrix row count must equal criteria count/, fn ->
+      %AnalyticHierarchy{}
+      |> AnalyticHierarchy.set_criteria(["a", "b", "c"])
+      |> AnalyticHierarchy.set_alternatives_matrix([[1, 2], [3, 4]])
+    end
+  end
+
+  test "raises when comparison matrix dimensions don't match criteria count" do
+    assert_raise ArgumentError, ~r/Comparison matrix dimensions must match/, fn ->
+      %AnalyticHierarchy{comparison_matrix: [[1, 2], [3, 4]]}
+      |> AnalyticHierarchy.set_criteria(["a", "b", "c"])
+      |> AnalyticHierarchy.normalize_comparison_matrix()
+    end
+  end
+
+  test "set_tagged_alternatives_matrix stores the map directly" do
+    tagged = %{"price" => [[1, 2], [3, 4]], "size" => [[5, 6], [7, 8]]}
+
+    result =
+      %AnalyticHierarchy{}
+      |> AnalyticHierarchy.set_criteria(["price", "size"])
+      |> AnalyticHierarchy.set_tagged_alternatives_matrix(tagged)
+
+    assert result.alternatives_matrix == tagged
+  end
+
+  test "set_tagged_alternatives_matrix raises on empty map" do
+    assert_raise ArgumentError, "Incorrect matrix!", fn ->
+      %AnalyticHierarchy{}
+      |> AnalyticHierarchy.set_criteria(["a", "b"])
+      |> AnalyticHierarchy.set_tagged_alternatives_matrix(%{})
+    end
   end
 
   def alternatives_matrix() do
