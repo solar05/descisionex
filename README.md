@@ -14,7 +14,7 @@ Package can be installed by adding `descisionex` to your list of dependencies in
 ```elixir
 def deps do
   [
-    {:descisionex, "~> 0.1.8"}
+    {:descisionex, "~> 1.0.0"}
   ]
 end
 ```

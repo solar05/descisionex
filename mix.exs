@@ -4,7 +4,7 @@ defmodule Descisionex.MixProject do
   def project do
     [
       app: :descisionex,
-      version: "0.1.8",
+      version: "1.0.0",
       elixir: "~> 1.11",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
