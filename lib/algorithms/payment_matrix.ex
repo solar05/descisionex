@@ -15,6 +15,7 @@ defmodule Descisionex.PaymentMatrix do
             generalized_additional_value: 0.5,
             bayes_criterion: %{},
             wald_criterion: %{},
+            maximax_criterion: %{},
             laplace_criterion: %{},
             savage_criterion: %{},
             hurwitz_criterion: %{},
@@ -34,6 +35,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
@@ -64,6 +66,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [],
+        maximax_criterion: %{},
         possible_steps: ["some", "steps"],
         possible_steps_num: 2,
         probabilities: [],
@@ -94,6 +97,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
@@ -130,6 +134,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
@@ -166,6 +171,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [0.4, 0.6],
@@ -210,20 +216,21 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
         savage_criterion: %{},
         variants: [],
         variants_num: 0,
-        wald_criterion: %{criterion: 4, strategy_index: 1, strategy_name: nil}
+        wald_criterion: %{criterion: 3, strategy_index: 1, strategy_name: nil}
       }
 
   """
   def calculate_wald_criterion(%PaymentMatrix{} = data) do
     if data.matrix == [], do: raise(ArgumentError, message: "Matrix must be set!")
 
-    all_criteria = Enum.map(data.matrix, fn row -> Enum.max(row) end)
+    all_criteria = Enum.map(data.matrix, fn row -> Enum.min(row) end)
     {wald_criterion, strategy_index} = Helper.find_max_criteria(all_criteria)
 
     Map.put(data, :wald_criterion, %{
@@ -234,13 +241,50 @@ defmodule Descisionex.PaymentMatrix do
   end
 
   @doc """
-  Calculates Laplace criterion (equal probability) for payment matrix (variants must be set).
+  Calculates Maximax criterion (optimism) for payment matrix.
+
+  ## Examples
+
+      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.calculate_maximax_criterion()
+      %Descisionex.PaymentMatrix{
+        bayes_criterion: %{},
+        generalized_additional_value: 0.5,
+        generalized_criterion: %{},
+        hurwitz_additional_value: 0.5,
+        hurwitz_criterion: %{},
+        laplace_criterion: %{},
+        matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{criterion: 4, strategy_index: 1, strategy_name: nil},
+        possible_steps: [],
+        possible_steps_num: 0,
+        probabilities: [],
+        savage_criterion: %{},
+        variants: [],
+        variants_num: 0,
+        wald_criterion: %{}
+      }
+
+  """
+  def calculate_maximax_criterion(%PaymentMatrix{} = data) do
+    if data.matrix == [], do: raise(ArgumentError, message: "Matrix must be set!")
+
+    all_criteria = Enum.map(data.matrix, fn row -> Enum.max(row) end)
+    {maximax_criterion, strategy_index} = Helper.find_max_criteria(all_criteria)
+
+    Map.put(data, :maximax_criterion, %{
+      criterion: maximax_criterion,
+      strategy_index: strategy_index,
+      strategy_name: resolve_strategy_name(data, strategy_index)
+    })
+  end
+
+  @doc """
+  Calculates Laplace criterion (equal probability) for payment matrix.
+  If variants are not explicitly set, the column count is inferred from the matrix.
 
   ## Examples
 
       iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.calculate_laplace_criterion()
-      ** (ArgumentError) For Laplace criterion variants must be set!
-      iex> %Descisionex.PaymentMatrix{matrix: [[1, 2], [3, 4]]} |> Descisionex.PaymentMatrix.set_variants(["some", "variants"]) |> Descisionex.PaymentMatrix.calculate_laplace_criterion()
       %Descisionex.PaymentMatrix{
         bayes_criterion: %{},
         generalized_additional_value: 0.5,
@@ -249,12 +293,13 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{criterion: 3.5, strategy_index: 1, strategy_name: nil},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
         savage_criterion: %{},
-        variants: ["some", "variants"],
-        variants_num: 2,
+        variants: [],
+        variants_num: 0,
         wald_criterion: %{}
       }
 
@@ -262,16 +307,16 @@ defmodule Descisionex.PaymentMatrix do
   def calculate_laplace_criterion(%PaymentMatrix{} = data) do
     if data.matrix == [], do: raise(ArgumentError, message: "Matrix must be set!")
 
-    variant_rows = data.variants_num
-
-    if variant_rows == 0,
-      do: raise(ArgumentError, message: "For Laplace criterion variants must be set!")
+    variant_count =
+      if data.variants_num > 0,
+        do: data.variants_num,
+        else: data.matrix |> List.first() |> length()
 
     all_criteria =
       data.matrix
       |> Enum.map(fn row ->
         Enum.map(row, fn element ->
-          Float.round(element / variant_rows, 3)
+          Float.round(element / variant_count, 3)
         end)
       end)
       |> Enum.map(fn row -> Enum.sum(row) end)
@@ -299,6 +344,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{criterion: 3.5, strategy_index: 1, strategy_name: nil},
         laplace_criterion: %{},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
@@ -359,6 +405,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
@@ -413,6 +460,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
@@ -475,6 +523,7 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{},
         laplace_criterion: %{},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [0.4, 0.6],
@@ -523,13 +572,14 @@ defmodule Descisionex.PaymentMatrix do
         hurwitz_criterion: %{criterion: 3.5, strategy_index: 1, strategy_name: nil},
         laplace_criterion: %{criterion: 3.5, strategy_index: 1, strategy_name: nil},
         matrix: [[1, 2], [3, 4]],
+        maximax_criterion: %{criterion: 4, strategy_index: 1, strategy_name: nil},
         possible_steps: [],
         possible_steps_num: 0,
         probabilities: [],
         savage_criterion: %{criterion: 0, strategy_index: 1, strategy_name: nil},
         variants: ["some", "variants"],
         variants_num: 2,
-        wald_criterion: %{criterion: 4, strategy_index: 1, strategy_name: nil}
+        wald_criterion: %{criterion: 3, strategy_index: 1, strategy_name: nil}
       }
 
   """
@@ -537,6 +587,7 @@ defmodule Descisionex.PaymentMatrix do
     result =
       data
       |> calculate_wald_criterion()
+      |> calculate_maximax_criterion()
       |> calculate_savage_criterion()
       |> calculate_laplace_criterion()
       |> calculate_hurwitz_criterion()

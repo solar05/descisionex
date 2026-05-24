@@ -20,7 +20,8 @@ defmodule DescisionexTest.PaymentMatrixTest do
   @hurwitz_criterion_additional %{criterion: 0.421, strategy_index: 3, strategy_name: nil}
   @laplace_criterion %{criterion: 0.382, strategy_index: 3, strategy_name: nil}
   @savage_criterion %{criterion: 0.0, strategy_index: 3, strategy_name: nil}
-  @wald_criterion %{criterion: 0.452, strategy_index: 3, strategy_name: nil}
+  @wald_criterion %{criterion: 0.293, strategy_index: 3, strategy_name: nil}
+  @maximax_criterion %{criterion: 0.452, strategy_index: 3, strategy_name: nil}
   @generalized_criterion %{criterion: 0.041, strategy_index: 4, strategy_name: nil}
   @generalized_criterion_additional %{criterion: 0.065, strategy_index: 4, strategy_name: nil}
 
@@ -43,6 +44,11 @@ defmodule DescisionexTest.PaymentMatrixTest do
     assert @laplace_criterion == result.laplace_criterion
   end
 
+  test "calculates laplace criterion without explicit variants (infers from matrix)" do
+    result = %PaymentMatrix{matrix: @matrix} |> PaymentMatrix.calculate_laplace_criterion()
+    assert @laplace_criterion == result.laplace_criterion
+  end
+
   test "calculates savage criterion" do
     result = setup_matrix() |> PaymentMatrix.calculate_savage_criterion()
     assert @savage_criterion == result.savage_criterion
@@ -51,6 +57,11 @@ defmodule DescisionexTest.PaymentMatrixTest do
   test "calculates wald criterion" do
     result = setup_matrix() |> PaymentMatrix.calculate_wald_criterion()
     assert @wald_criterion == result.wald_criterion
+  end
+
+  test "calculates maximax criterion" do
+    result = setup_matrix() |> PaymentMatrix.calculate_maximax_criterion()
+    assert @maximax_criterion == result.maximax_criterion
   end
 
   test "calculate generalized criterion" do
@@ -90,6 +101,7 @@ defmodule DescisionexTest.PaymentMatrixTest do
       |> PaymentMatrix.calculate_criteria()
 
     assert result.wald_criterion.strategy_name == "step3"
+    assert result.maximax_criterion.strategy_name == "step3"
     assert result.savage_criterion.strategy_name == "step3"
     assert result.hurwitz_criterion.strategy_name == "step3"
     assert result.laplace_criterion.strategy_name == "step3"

@@ -34,6 +34,16 @@ defmodule DescisionexTest do
       |> Descisionex.calculate_wald_criterion()
 
     assert result.wald_criterion.strategy_index == 3
+    assert result.wald_criterion.criterion == 0.293
+  end
+
+  test "facade: calculate_maximax_criterion delegates to PaymentMatrix" do
+    result =
+      Descisionex.payment_matrix(@matrix)
+      |> Descisionex.calculate_maximax_criterion()
+
+    assert result.maximax_criterion.strategy_index == 3
+    assert result.maximax_criterion.criterion == 0.452
   end
 
   test "facade: calculate_laplace_criterion delegates to PaymentMatrix" do
@@ -109,6 +119,7 @@ defmodule DescisionexTest do
       |> Descisionex.calculate_criteria()
 
     assert result.wald_criterion != %{}
+    assert result.maximax_criterion != %{}
     assert result.savage_criterion != %{}
     assert result.laplace_criterion != %{}
     assert result.hurwitz_criterion != %{}
@@ -206,6 +217,25 @@ defmodule DescisionexTest do
 
     assert result.alternatives_weights_by_criteria != []
     assert length(result.alternatives_weights_by_criteria) == 3
+  end
+
+  test "facade: rank_alternatives returns sorted ranked list" do
+    result =
+      Descisionex.analytic_hierarchy(@comparison_matrix)
+      |> Descisionex.set_criteria(["price", "size", "rooms", "place", "category"])
+      |> Descisionex.set_alternatives(["apt1", "apt2", "apt3"])
+      |> Descisionex.set_alternatives_matrix(alternatives_matrix())
+      |> Descisionex.calculate()
+      |> Descisionex.rank_alternatives()
+
+    assert length(result) == 3
+    [first | rest] = result
+    assert first.rank == 1
+    assert Enum.at(rest, 0).rank == 2
+    assert Enum.at(rest, 1).rank == 3
+    weights = Enum.map(result, & &1.weight)
+    assert weights == Enum.sort(weights, :desc)
+    assert Enum.all?(result, &Map.has_key?(&1, :alternative))
   end
 
   test "facade: calculate_alternatives_weights delegates correctly" do

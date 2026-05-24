@@ -75,6 +75,10 @@ defmodule Descisionex do
     data |> PaymentMatrix.calculate_wald_criterion()
   end
 
+  def calculate_maximax_criterion(%PaymentMatrix{} = data) do
+    data |> PaymentMatrix.calculate_maximax_criterion()
+  end
+
   def calculate_laplace_criterion(%PaymentMatrix{} = data) do
     data |> PaymentMatrix.calculate_laplace_criterion()
   end
@@ -123,5 +127,15 @@ defmodule Descisionex do
 
   def calculate(%AnalyticHierarchy{} = data) do
     data |> AnalyticHierarchy.calculate()
+  end
+
+  def rank_alternatives(%AnalyticHierarchy{} = data) do
+    data.alternatives_weights
+    |> Enum.zip(data.alternatives)
+    |> Enum.sort_by(fn {weight, _} -> weight end, :desc)
+    |> Enum.with_index(1)
+    |> Enum.map(fn {{weight, alternative}, rank} ->
+      %{rank: rank, alternative: alternative, weight: weight}
+    end)
   end
 end
